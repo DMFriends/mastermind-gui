@@ -1,0 +1,11 @@
+C:\Users\miret\Documents\Coding\Daniel\C#\Temp\Mastermind GUI\Mastermind GUI\bin\Debug\Mastermind GUI.exe.config
+C:\Users\miret\Documents\Coding\Daniel\C#\Temp\Mastermind GUI\Mastermind GUI\bin\Debug\Mastermind GUI.exe
+C:\Users\miret\Documents\Coding\Daniel\C#\Temp\Mastermind GUI\Mastermind GUI\bin\Debug\Mastermind GUI.pdb
+C:\Users\miret\Documents\Coding\Daniel\C#\Temp\Mastermind GUI\Mastermind GUI\obj\Debug\Mastermind GUI.csproj.AssemblyReference.cache
+C:\Users\miret\Documents\Coding\Daniel\C#\Temp\Mastermind GUI\Mastermind GUI\obj\Debug\Mastermind_GUI.Codebreaker.resources
+C:\Users\miret\Documents\Coding\Daniel\C#\Temp\Mastermind GUI\Mastermind GUI\obj\Debug\Mastermind_GUI.Codemaker.resources
+C:\Users\miret\Documents\Coding\Daniel\C#\Temp\Mastermind GUI\Mastermind GUI\obj\Debug\Mastermind_GUI.Properties.Resources.resources
+C:\Users\miret\Documents\Coding\Daniel\C#\Temp\Mastermind GUI\Mastermind GUI\obj\Debug\Mastermind GUI.csproj.GenerateResource.cache
+C:\Users\miret\Documents\Coding\Daniel\C#\Temp\Mastermind GUI\Mastermind GUI\obj\Debug\Mastermind GUI.csproj.CoreCompileInputs.cache
+C:\Users\miret\Documents\Coding\Daniel\C#\Temp\Mastermind GUI\Mastermind GUI\obj\Debug\Mastermind GUI.exe
+C:\Users\miret\Documents\Coding\Daniel\C#\Temp\Mastermind GUI\Mastermind GUI\obj\Debug\Mastermind GUI.pdb
