@@ -1,0 +1,205 @@
+name: Build installers
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Installer version
+        required: false
+        default: 1.0
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  deb:
+    name: Package Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build deb
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.version }}"
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="1.0.0.${GITHUB_RUN_NUMBER}"
+          fi
+
+          APP_EXE="Mastermind GUI/bin/Debug/Mastermind GUI.exe"
+          APP_CONFIG="Mastermind GUI/bin/Debug/Mastermind GUI.exe.config"
+          test -f "$APP_EXE"
+          test -f "$APP_CONFIG"
+
+          ROOT="build/deb"
+          INSTALL_ROOT="$ROOT/mastermind-gui_${VERSION}_all"
+
+          rm -rf build dist
+          mkdir -p \
+            "$INSTALL_ROOT/DEBIAN" \
+            "$INSTALL_ROOT/opt/mastermind-gui" \
+            "$INSTALL_ROOT/usr/bin" \
+            "$INSTALL_ROOT/usr/share/applications" \
+            dist
+
+          cp "$APP_EXE" "$INSTALL_ROOT/opt/mastermind-gui/Mastermind GUI.exe"
+          cp "$APP_CONFIG" "$INSTALL_ROOT/opt/mastermind-gui/Mastermind GUI.exe.config"
+
+          cat > "$INSTALL_ROOT/DEBIAN/control" <<EOF
+          Package: mastermind-gui
+          Version: ${VERSION}
+          Section: games
+          Priority: optional
+          Architecture: all
+          Depends: wine | mono-runtime
+          Maintainer: Mastermind GUI <noreply@example.invalid>
+          Description: Mastermind GUI desktop game
+           Mastermind GUI is a Windows Forms implementation of the Mastermind game.
+           This package installs the checked-in Windows executable and a launcher
+           that uses Wine or Mono when available.
+          EOF
+
+          sed -i 's/^          //' "$INSTALL_ROOT/DEBIAN/control"
+
+          cat > "$INSTALL_ROOT/usr/bin/mastermind-gui" <<'EOF'
+          #!/bin/sh
+          set -e
+          APP="/opt/mastermind-gui/Mastermind GUI.exe"
+          if command -v wine >/dev/null 2>&1; then
+            exec wine "$APP" "$@"
+          fi
+          if command -v mono >/dev/null 2>&1; then
+            exec mono "$APP" "$@"
+          fi
+          echo "Mastermind GUI is a Windows Forms .NET Framework app. Install Wine or Mono to run it." >&2
+          exit 1
+          EOF
+
+          sed -i 's/^          //' "$INSTALL_ROOT/usr/bin/mastermind-gui"
+          chmod 755 "$INSTALL_ROOT/usr/bin/mastermind-gui"
+
+          cat > "$INSTALL_ROOT/usr/share/applications/mastermind-gui.desktop" <<'EOF'
+          [Desktop Entry]
+          Name=Mastermind GUI
+          Comment=Play Mastermind
+          Exec=mastermind-gui
+          Terminal=false
+          Type=Application
+          Categories=Game;LogicGame;
+          EOF
+
+          sed -i 's/^          //' "$INSTALL_ROOT/usr/share/applications/mastermind-gui.desktop"
+          chmod 644 "$INSTALL_ROOT/usr/share/applications/mastermind-gui.desktop"
+
+          dpkg-deb --root-owner-group --build "$INSTALL_ROOT" "dist/mastermind-gui_${VERSION}_all.deb"
+          dpkg-deb --info "dist/mastermind-gui_${VERSION}_all.deb"
+          dpkg-deb --contents "dist/mastermind-gui_${VERSION}_all.deb"
+
+      - name: Upload deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mastermind-gui-deb
+          path: dist/*.deb
+
+  dmg:
+    name: Package macOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build dmg
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ inputs.version }}"
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="1.0.0.${GITHUB_RUN_NUMBER}"
+          fi
+
+          APP_EXE="Mastermind GUI/bin/Debug/Mastermind GUI.exe"
+          APP_CONFIG="Mastermind GUI/bin/Debug/Mastermind GUI.exe.config"
+          test -f "$APP_EXE"
+          test -f "$APP_CONFIG"
+
+          APP_NAME="Mastermind GUI"
+          DMG_ROOT="build/dmg-root"
+          APP_BUNDLE="${DMG_ROOT}/${APP_NAME}.app"
+          CONTENTS="$APP_BUNDLE/Contents"
+
+          rm -rf build dist
+          mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources" dist
+
+          cp "$APP_EXE" "$CONTENTS/Resources/Mastermind GUI.exe"
+          cp "$APP_CONFIG" "$CONTENTS/Resources/Mastermind GUI.exe.config"
+
+          cat > "$CONTENTS/Info.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key>
+            <string>mastermind-gui</string>
+            <key>CFBundleIdentifier</key>
+            <string>local.mastermind-gui</string>
+            <key>CFBundleName</key>
+            <string>${APP_NAME}</string>
+            <key>CFBundleShortVersionString</key>
+            <string>${VERSION}</string>
+            <key>CFBundleVersion</key>
+            <string>${VERSION}</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>10.13</string>
+          </dict>
+          </plist>
+          EOF
+
+          sed -i '' 's/^          //' "$CONTENTS/Info.plist"
+
+          cat > "$CONTENTS/MacOS/mastermind-gui" <<'EOF'
+          #!/bin/sh
+          APP_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+          EXE="$APP_DIR/Resources/Mastermind GUI.exe"
+          if command -v wine >/dev/null 2>&1; then
+            exec wine "$EXE" "$@"
+          fi
+          if command -v mono >/dev/null 2>&1; then
+            exec mono "$EXE" "$@"
+          fi
+          osascript -e 'display dialog "Mastermind GUI is a Windows Forms .NET Framework app. Install Wine or Mono to run it." buttons {"OK"} default button "OK"'
+          exit 1
+          EOF
+
+          sed -i '' 's/^          //' "$CONTENTS/MacOS/mastermind-gui"
+          chmod 755 "$CONTENTS/MacOS/mastermind-gui"
+          ln -s /Applications "${DMG_ROOT}/Applications"
+
+          hdiutil create \
+            -volname "$APP_NAME" \
+            -srcfolder "$DMG_ROOT" \
+            -ov \
+            -format UDZO \
+            "dist/Mastermind-GUI-${VERSION}-macos.dmg"
+
+          hdiutil verify "dist/Mastermind-GUI-${VERSION}-macos.dmg"
+
+      - name: Upload dmg artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mastermind-gui-dmg
+          path: dist/*.dmg
