@@ -1,7 +1,8 @@
 /build/
 /dist/
 /scripts/
+/.vs/
 /.localappdata/
 /$verify/
-/Mastermind GUI/bin/Release/
-/Mastermind GUI/obj/Release/
+/Mastermind GUI/bin/
+/Mastermind GUI/obj/
