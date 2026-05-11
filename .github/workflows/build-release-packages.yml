@@ -1,12 +1,12 @@
-name: Build installers
+name: Build release packages
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: Installer version
-        required: false
-        default: 1.0
+        description: Version to put in the package name
+        required: true
+        default: "1.0"
   push:
     tags:
       - "v*"
