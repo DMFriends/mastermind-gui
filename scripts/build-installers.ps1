@@ -1,6 +1,7 @@
 param(
     [string]$Configuration = "Release",
-    [string]$Version = "1.0.0"
+    [string]$Version = "1.0.0",
+    [string]$MsiVersion = "1.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -216,7 +217,7 @@ $wxsPath = Join-Path $wixRoot "MastermindGUI.wxs"
 @"
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="*" Name="Mastermind GUI" Language="1033" Version="$Version" Manufacturer="Mastermind GUI" UpgradeCode="F9D58C1B-217F-4971-8A5A-3A41A5481F35">
+  <Product Id="*" Name="Mastermind GUI" Language="1033" Version="$MsiVersion" Manufacturer="Mastermind GUI" UpgradeCode="F9D58C1B-217F-4971-8A5A-3A41A5481F35">
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
     <MajorUpgrade DowngradeErrorMessage="A newer version of Mastermind GUI is already installed." />
     <MediaTemplate EmbedCab="yes" />
@@ -273,7 +274,7 @@ $wxsPath = Join-Path $wixRoot "MastermindGUI.wxs"
 "@ | Set-Content -LiteralPath $wxsPath -Encoding UTF8
 
 $wixObj = Join-Path $wixRoot "MastermindGUI.wixobj"
-$msiPath = Join-Path $outputRoot "Mastermind-GUI-$Version-win-x86.msi"
+$msiPath = Join-Path $outputRoot "Mastermind-GUI-$MsiVersion-win-x86.msi"
 & (Join-Path $wixBin "candle.exe") -out $wixObj $wxsPath
 if ($LASTEXITCODE -ne 0) {
     throw "WiX candle failed."
